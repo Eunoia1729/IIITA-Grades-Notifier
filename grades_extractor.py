@@ -17,7 +17,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 import time
-import pickle 
+import pickle
 import collections
 import notify2
 from time import gmtime, strftime
@@ -72,9 +72,9 @@ else:
 	display_str =""
 	for result in results:
 		display_str += result
-		display_str += "\n" 
+		display_str += "\n"
 	print(display_str)
-	alert = notify2.Notification('IIITA GRADE NOTIFIER', 'Grades have been updated')
+	alert = notify2.Notification('IIITA GRADE NOTIFIER', 'Grades have been updated. Check the output on terminal too see the updates')
 	alert.show()
 
 driver.close()
