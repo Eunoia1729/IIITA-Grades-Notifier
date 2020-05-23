@@ -26,7 +26,9 @@ cd IIITA-Grades-Notifier
 ## Features
 - Checks portal (https://apply.iiita.ac.in/unified_login/) every 5 minutes.
 - Alerts you on you desktop if the grades have been uploaded / changed.
-- Secure
-![Demo]("screenshot.png")
+- Secure     
+
+     
+![Demo](https://github.com/Eunoia1729/IIITA-Grades-Notifier/blob/master/screenshot.png)
 
 Wish you high pointers !
