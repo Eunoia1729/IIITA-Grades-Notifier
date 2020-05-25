@@ -11,7 +11,7 @@ One of the professors decided to change the grades every hour to give anxiety at
 git clone https://github.com/Eunoia1729/IIITA-Grades-Notifier.git
 ```
 
-- Check your Chrome browser version and download the suitable chromedriver. Download from here(8-10 MB file) - https://chromedriver.chromium.org/downloads, unzip the folder and the driver in the project repository.
+- Check your Chrome browser version and download the suitable chromedriver. Download from here(8-10 MB file) - https://chromedriver.chromium.org/downloads, unzip the folder and put the driver in the project repository.
 
 - Inside the repository, run the below commands for preparing the notifier. You might be required to enter linux password.
 ```
