@@ -1,80 +1,76 @@
-# Imports
-from bs4 import BeautifulSoup
-import re
+"""Log in to the IIITA portal, read the grades and notify on a change."""
+import json
 import os
-from time import sleep
-import urllib.request
-import requests
-import errno
-import shutil
 import sys
-import traceback
-import requests
-from requests.adapters import HTTPAdapter
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 import time
-import pickle
-import collections
-import notify2
-from time import gmtime, strftime
+from collections import Counter
+from pathlib import Path
 
-# Import variables
-username = os.environ['uservar']
-pwd = os.environ['passvar']
+from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.by import By
 
-# Selenium configurations
-chromeOptions = webdriver.ChromeOptions()
-root_path = "./"
-chromedriver = root_path + "chromedriver"
-driver = webdriver.Chrome(executable_path=chromedriver, chrome_options=chromeOptions)
-driver.minimize_window()
-
-# User agent configurations
-user_agent = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko)    Chrome/41.0.2228.0 Safari/537.36'
-
-# Load website
-driver.get("https://apply.iiita.ac.in/unified_login/")
-time.sleep(3)
-
-# Login
-driver.find_element_by_xpath('//*[@id="id_username"]').send_keys(username)
-time.sleep(1)
-driver.find_element_by_xpath('//*[@id="id_password"]').send_keys(pwd)
-time.sleep(1)
-driver.find_element_by_xpath("/html/body/div/div/div/section/form/div[3]/input[2]").click()
-time.sleep(5)
-
-# You may increase below timer to 10 if you have slow internet connection.
-time.sleep(5)
-
-
-results = []
 try:
-	for row in driver.find_elements_by_xpath("/html/body/div/div/div[3]/div/div[3]/div/div/div[2]/div/div[2]/div/div[2]/div"):
-		results.append(row.text)
-except Exception as e:
-	print("Extraction attempt failed. Please try again with correct Credentials.")
-	sys.exit()
-filename = 'results.sav'
+    import notify2
+except ImportError:  # optional desktop notifications
+    notify2 = None
 
-prev_results = pickle.load(open(filename, 'rb'))
-notify2.init('IIITA GRADE NOTIFIER')
+PORTAL_URL = "https://apply.iiita.ac.in/unified_login/"
+RESULTS_FILE = Path("results.json")
+# Brittle absolute XPaths: update them if the portal layout changes.
+LOGIN_BUTTON_XPATH = "/html/body/div/div/div/section/form/div[3]/input[2]"
+GRADE_ROWS_XPATH = "/html/body/div/div/div[3]/div/div[3]/div/div/div[2]/div/div[2]/div/div[2]/div"
 
-if collections.Counter(results) == collections.Counter(prev_results):
-	print(str(strftime("%Y-%m-%d %H:%M:%S", gmtime())) + ": No updates found")
-else:
-	print(str(strftime("%Y-%m-%d %H:%M:%S", gmtime())) + ": Updates found")
-	pickle.dump(results, open(filename, 'wb'))
-	display_str =""
-	for result in results:
-		display_str += result
-		display_str += "\n"
-	print(display_str)
-	alert = notify2.Notification('IIITA GRADE NOTIFIER', 'Grades have been updated. Check the output on terminal too see the updates')
-	alert.show()
 
-driver.close()
+def fetch_results(username, password):
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options=options)  # Selenium Manager downloads the driver
+    try:
+        driver.get(PORTAL_URL)
+        time.sleep(3)
+        driver.find_element(By.ID, "id_username").send_keys(username)
+        driver.find_element(By.ID, "id_password").send_keys(password)
+        driver.find_element(By.XPATH, LOGIN_BUTTON_XPATH).click()
+        time.sleep(10)  # raise this on a slow connection
+        return [row.text for row in driver.find_elements(By.XPATH, GRADE_ROWS_XPATH)]
+    finally:
+        driver.quit()
+
+
+def notify(message):
+    if notify2 is None:
+        return
+    try:
+        notify2.init("IIITA GRADE NOTIFIER")
+        notify2.Notification("IIITA GRADE NOTIFIER", message).show()
+    except Exception as exc:  # no D-Bus session, etc.
+        print(f"Desktop notification failed: {exc}")
+
+
+def main():
+    try:
+        username, password = os.environ["uservar"], os.environ["passvar"]
+    except KeyError:
+        sys.exit("Set the uservar and passvar environment variables (see README).")
+
+    try:
+        results = fetch_results(username, password)
+    except WebDriverException as exc:
+        sys.exit(f"Extraction attempt failed: {exc.msg}")
+    if not results:
+        sys.exit("No grades found. Check your credentials or the XPaths for the portal layout.")
+
+    previous = json.loads(RESULTS_FILE.read_text()) if RESULTS_FILE.exists() else None
+    now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    if previous is not None and Counter(results) == Counter(previous):
+        print(f"{now}: No updates found")
+        return
+    print(f"{now}: Updates found")
+    RESULTS_FILE.write_text(json.dumps(results, indent=2))
+    print("\n".join(results))
+    notify("Grades have been updated. Check the terminal output for details.")
+
+
+if __name__ == "__main__":
+    main()

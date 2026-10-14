@@ -1,0 +1,5 @@
+results.json
+results.sav
+chromedriver
+__pycache__/
+.venv/

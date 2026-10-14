@@ -11,9 +11,9 @@ One of the professors decided to change the grades every hour to give anxiety at
 git clone https://github.com/Eunoia1729/IIITA-Grades-Notifier.git
 ```
 
-- Check your Chrome browser version and download the suitable chromedriver. Download from here(8-10 MB file) - https://chromedriver.chromium.org/downloads, unzip the folder and put the driver in the project repository.
+- Install Google Chrome. The matching chromedriver is downloaded automatically by Selenium (4.6+).
 
-- Inside the repository, run the below commands for preparing the notifier. You might be required to enter linux password.
+- Inside the repository, run the below commands for preparing the notifier. You will be asked for your sudo password to install system packages.
 ```
 cd IIITA-Grades-Notifier   
 ./install_dependencies.sh   
@@ -22,6 +22,11 @@ cd IIITA-Grades-Notifier
 - Your LDAP credentials will be asked  and then the automation begins !
 
 **Note** : Your credentials remain safe and local to the session on your desktop and are wiped off after session ends.
+
+## Troubleshooting
+The scraper uses fixed XPaths into the portal's HTML. If the portal layout changes, the script will report
+"No grades found"; update `GRADE_ROWS_XPATH` and `LOGIN_BUTTON_XPATH` in `grades_extractor.py`.
+Grades are cached in `results.json`, which is git-ignored.
 
 ## Features
 - Checks portal (https://apply.iiita.ac.in/unified_login/) every 5 minutes.

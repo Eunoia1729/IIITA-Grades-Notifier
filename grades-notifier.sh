@@ -1,13 +1,14 @@
 #!/bin/bash
-#!/usr/bin/env python3
 
 # Ask the user for credentials
 echo "Enter LDAP Credentials :"
 read -p 'Username: ' uservar
 read -sp 'Password: ' passvar
+echo
 export uservar
 export passvar
 
-python3 intro.py
+.venv/bin/python intro.py
 
-while true ; do python3 grades_extractor.py & sleep 5m ; done
+# Check every 5 minutes
+while true ; do .venv/bin/python grades_extractor.py ; sleep 5m ; done
